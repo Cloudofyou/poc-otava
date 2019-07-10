@@ -1,0 +1,53 @@
+# Created by Topology-Converter v4.6.9
+#    Template Revision: v4.6.9
+#    https://github.com/cumulusnetworks/topology_converter
+#    using topology data from: ./site.dot
+
+
+
+
+[oob-switch]
+oob-mgmt-switch ansible_host=192.168.200.16
+
+
+
+
+
+
+
+[leaf]
+leaf06 ansible_host=192.168.200.6
+dci02 ansible_host=192.168.200.8
+border02 ansible_host=192.168.200.10
+isp05 ansible_host=192.168.200.15
+isp04 ansible_host=192.168.200.14
+isp01 ansible_host=192.168.200.11
+isp03 ansible_host=192.168.200.13
+isp02 ansible_host=192.168.200.12
+dci01 ansible_host=192.168.200.7
+leaf04 ansible_host=192.168.200.4
+leaf05 ansible_host=192.168.200.5
+leaf02 ansible_host=192.168.200.2
+leaf03 ansible_host=192.168.200.3
+leaf01 ansible_host=192.168.200.1
+border01 ansible_host=192.168.200.9
+
+
+
+[spine]
+spine02 ansible_host=192.168.200.22
+spine01 ansible_host=192.168.200.21
+
+
+
+
+
+[host]
+server01 ansible_host=192.168.200.31
+server03 ansible_host=192.168.200.33
+server02 ansible_host=192.168.200.32
+
+
+[all:vars]
+ansible_user=cumulus
+ansible_ssh_pass=CumulusLinux!

@@ -1,0 +1,384 @@
+---
+- hosts: internet
+  tasks:
+   - name: Configure switch to act as campus/internet
+     nclu:
+       commands:
+
+         - add loopback lo ip address 10.19.241.3/32
+         - add vlan 10 ip address 192.168.100.1/24
+         - add vlan 20 ip address 192.168.101.1/24
+         - add vlan 30 ip address 192.168.102.1/24
+         - add vlan 40 ip address 192.168.103.1/24
+         - add interface swp1 ip address 172.17.0.2/30
+         - add interface swp2 ip address 172.17.0.6/30
+         - add ospf router-id 10.19.241.3
+         - add ospf network 172.17.0.0/30 area 0.0.0.0
+         - add ospf network 172.17.0.4/30 area 0.0.0.0
+         - add ospf network 192.168.100.0/21 area 0.0.0.0
+         - add ospf network 10.19.241.3/32 area 0.0.0.0
+         - add routing route 10.19.241.0/24 172.17.0.1 100
+         - add routing route 10.19.241.0/24 172.17.0.5 100
+
+       commit: true
+
+- hosts: cisco9500-01
+  tasks:
+   - name: Configure cisco9500-01 to connect to POC network
+     nclu:
+       commands:
+
+         - add loopback lo ip address 10.19.241.1/32
+         - add bgp autonomous-system 65001
+         - add interface swp1 ip address 172.16.0.1/31
+         - add interface swp3 ip address 172.16.0.4/31
+         - add interface swp4 ip address 172.17.0.1/30
+         - add bgp neighbor 172.16.0.0 remote-as 65201
+         - add bgp neighbor 172.16.0.5 remote-as 65001
+         - add bgp network 10.19.241.1/32
+         - add bgp network 172.16.0.0/31
+         - add bgp network 172.16.0.4/31
+         - add ospf router-id 10.19.241.1
+         - add ospf network 172.17.0.0/30 area 0.0.0.0
+         - add ospf redistribute bgp metric 100
+         - add bgp redistribute ospf metric 100
+
+       commit: true
+
+- hosts: cisco9500-02
+  tasks:
+   - name: Configure cisco9500-02 to connect to POC network
+     nclu:
+       commands:
+
+         - add loopback lo ip address 10.19.241.2/32
+         - add bgp autonomous-system 65001
+         - add interface swp1 ip address 172.16.0.3/31
+         - add interface swp3 ip address 172.16.0.5/31
+         - add interface swp4 ip address 172.17.0.5/30
+         - add bgp neighbor 172.16.0.2 remote-as 65202
+         - add bgp neighbor 172.16.0.6 remote-as 65001
+         - add bgp network 10.19.241.2/32
+         - add bgp network 172.16.0.2/31
+         - add bgp network 172.16.0.4/31
+         - add ospf router-id 10.19.241.2
+         - add ospf network 172.17.0.4/30 area 0.0.0.0
+         - add ospf redistribute bgp metric 100
+         - add bgp redistribute ospf metric 100
+
+       commit: true
+
+
+- hosts: s1
+  tasks:
+   - name: Configure spine01
+     nclu:
+       commands:
+
+         - add loopback lo ip address 10.19.241.10/32
+         - add bgp autonomous-system 65100
+         - add bgp network 10.19.241.10/32
+         - add bgp neighbor LEAFS peer-group
+         - add bgp neighbor LEAFS remote-as external
+         - add bgp neighbor LEAFS capability extended-nexthop
+         - add bgp neighbor LEAFS description Internal Fabric Network
+         - add bgp neighbor swp1-4 interface peer-group LEAFS
+         - add bgp bestpath as-path multipath-relax
+         - add bgp evpn neighbor swp1-4 activate
+         - add bgp evpn advertise-all-vni
+
+       commit: true
+
+- hosts: s2
+  tasks:
+   - name: Configure spine02
+     nclu:
+       commands:
+
+         - add loopback lo ip address 10.19.241.11/32
+         - add bgp autonomous-system 65101
+         - add bgp network 10.19.241.11/32
+         - add bgp neighbor LEAFS peer-group
+         - add bgp neighbor LEAFS remote-as external
+         - add bgp neighbor LEAFS capability extended-nexthop
+         - add bgp neighbor LEAFS description Internal Fabric Network
+         - add bgp neighbor swp1-4 interface peer-group LEAFS
+         - add bgp bestpath as-path multipath-relax
+         - add bgp evpn neighbor swp1-4 activate
+         - add bgp evpn advertise-all-vni
+
+       commit: true
+
+- hosts: bl1
+  tasks:
+   - name: Configure border leaf01
+     nclu:
+       commands:
+
+         - add loopback lo ip address 10.19.241.12/32
+         - add bgp autonomous-system 65201
+         - add routing prefix-list ipv4 list1 seq 10 permit 10.19.241.0/24 ge 32
+         - add routing prefix-list ipv4 list1 seq 20 permit 192.168.0.0/16 ge 24
+         - add routing prefix-list ipv4 list1 seq 30 deny any
+         - add interface swp25 ip address 172.16.0.0/31
+         - add bgp network 10.19.241.12/32
+         - add bgp neighbor SPINES peer-group
+         - add bgp neighbor SPINES remote-as external
+         - add bgp neighbor SPINES capability extended-nexthop
+         - add bgp neighbor SPINES description Internal Fabric Network
+         - add bgp neighbor swp29-30 interface peer-group SPINES
+         - add bgp evpn neighbor swp29-30 activate
+         - add bgp evpn advertise-all-vni
+         - add bgp ipv4 unicast neighbor SPINES prefix-list list1 out
+         - add bgp bestpath as-path multipath-relax
+         - add vrf tenant1
+         - add interface swp25 vrf tenant1
+         - add bgp vrf tenant1 autonomous-system 65201
+         - add bgp vrf tenant1 bestpath as-path multipath-relax
+         - add bgp vrf tenant1 neighbor 172.16.0.1 remote-as 65001
+         - add bgp vrf tenant1 evpn advertise ipv4 unicast
+         - add vlan 4001 vrf tenant1
+         - add vlan 4001 hwaddress 44:38:39:11:00:15
+         - add bgp vrf tenant1 network 172.16.0.0/31
+         - add vxlan vni104001 vxlan id 104001
+         - add vxlan vni104001 bridge access 4001
+         - add vxlan vni104001 bridge learning off
+         - add vxlan vni104001 bridge arp-nd-suppress on
+         - add vxlan vni104001 vxlan local-tunnelip 10.19.241.12
+         - add vrf tenant1 vni 104001
+
+       commit: true
+
+- hosts: bl2
+  tasks:
+   - name: Configure border leaf02
+     nclu:
+       commands:
+
+         - add loopback lo ip address 10.19.241.13/32
+         - add bgp autonomous-system 65202
+         - add routing prefix-list ipv4 list1 seq 10 permit 10.19.241.0/24 ge 32
+         - add routing prefix-list ipv4 list1 seq 20 permit 192.168.0.0/16 ge 24
+         - add routing prefix-list ipv4 list1 seq 30 deny any
+         - add interface swp55 ip address 172.16.0.2/31
+         - add bgp network 10.19.241.13/32
+         - add bgp neighbor SPINES peer-group
+         - add bgp neighbor SPINES remote-as external
+         - add bgp neighbor SPINES capability extended-nexthop
+         - add bgp neighbor SPINES description Internal Fabric Network
+         - add bgp neighbor swp53 interface peer-group SPINES
+         - add bgp neighbor swp54 interface peer-group SPINES
+         - add bgp ipv4 unicast neighbor SPINES prefix-list list1 out
+         - add bgp evpn neighbor swp53-54 activate
+         - add bgp evpn advertise-all-vni
+         - add bgp bestpath as-path multipath-relax
+         - add vrf tenant1
+         - add interface swp55 vrf tenant1
+         - add bgp vrf tenant1 autonomous-system 65202
+         - add bgp vrf tenant1 bestpath as-path multipath-relax
+         - add bgp vrf tenant1 neighbor 172.16.0.3 remote-as 65001
+         - add bgp vrf tenant1 evpn advertise ipv4 unicast
+         - add vlan 4001 vrf tenant1
+         - add vlan 4001 hwaddress 44:38:39:11:00:16
+         - add bgp vrf tenant1 network 172.16.0.2/31
+         - add vxlan vni104001 vxlan id 104001
+         - add vxlan vni104001 bridge access 4001
+         - add vxlan vni104001 bridge learning off
+         - add vxlan vni104001 bridge arp-nd-suppress on
+         - add vxlan vni104001 vxlan local-tunnelip 10.19.241.13
+         - add vrf tenant1 vni 104001
+
+
+       commit: true
+
+- hosts: l3
+  tasks:
+   - name: Configure leaf03
+     nclu:
+       commands:
+
+         - add loopback lo ip address 10.19.241.14/32
+         - add loopback lo clag vxlan-anycast-ip 10.19.241.100
+         - add bgp autonomous-system 65203
+         - add bgp network 10.19.241.14/32
+         - add bgp neighbor SPINES peer-group
+         - add bgp neighbor SPINES remote-as external
+         - add bgp neighbor SPINES capability extended-nexthop
+         - add bgp neighbor SPINES description Internal Fabric Network
+         - add bgp neighbor swp53 interface peer-group SPINES
+         - add bgp neighbor swp54 interface peer-group SPINES
+         - add bgp bestpath as-path multipath-relax
+         - add interface swp3,swp5,swp11-12,swp55-56
+         - add vlan 160,161,70,60
+         - add bond peerlink bond slaves swp55,swp56
+         - add interface peerlink.4094 clag peer-ip linklocal
+         - add interface peerlink.4094 clag backup-ip 192.168.200.9 vrf mgmt
+         - add interface peerlink.4094 clag sys-mac 44:38:39:FF:01:56
+         - add interface peerlink.4094 clag priority 100
+         - add bridge bridge ports peerlink
+         - add bridge stp treeprio 8192
+         - add vrf tenant1
+         - add vrf tenant1 vni 104001
+         - add vlan 160 ip address 10.1.212.2/24
+         - add vlan 160 ip address-virtual 00:00:5e:00:a0:01 10.1.212.1/24
+         - add vlan 160 vlan-id 160
+         - add vlan 160 vlan-raw-device bridge
+         - add vlan 160 vrf tenant1
+         - add bgp ipv4 unicast network 10.1.212.0/24
+         - add vlan 161 ip address 10.19.1.2/24
+         - add vlan 161 ip address-virtual 00:00:5e:00:a1:01 10.19.1.1/24
+         - add vlan 161 vlan-id 161
+         - add vlan 161 vlan-raw-device bridge
+         - add vlan 161 vrf tenant1
+         - add bgp ipv4 unicast network 10.19.1.0/24
+         - add vlan 70 ip address 10.18.0.2/24
+         - add vlan 70 ip address-virtual 00:00:5e:00:46:01 10.18.0.1/24
+         - add vlan 70 vlan-id 70
+         - add vlan 70 vlan-raw-device bridge
+         - add vlan 70 vrf tenant1
+         - add bgp ipv4 unicast network 10.18.0.0/24
+         - add vlan 60 ip address 10.18.10.2/24
+         - add vlan 60 ip address-virtual 00:00:5e:00:3c:01 10.18.10.1/24
+         - add vlan 60 vlan-id 60
+         - add vlan 60 vlan-raw-device bridge
+         - add vlan 60 vrf tenant1
+         - add bgp ipv4 unicast network 10.18.10.0/24
+         - add interface swp3 post-up ip link set swp3 promisc on
+         - add interface swp5 post-up ip link set swp5 promisc on
+         - add interface swp11 post-up ip link set swp11 promisc on
+         - add interface swp12 post-up ip link set swp12 promisc on
+         - add interface swp55 post-up ip link set swp55 promisc on
+         - add interface swp56 post-up ip link set swp56 promisc on
+         - add bridge bridge ports swp11
+         - add bridge bridge ports swp12
+         - add bond bond03 bond slaves swp3
+         - add bond bond03 clag id 3
+         - add bond bond03 bridge trunk vlans 60
+         - add bond bond04 bond slaves swp5
+         - add bond bond04 clag id 4
+         - add bond bond04 bridge trunk vlans 60
+         - add bgp l2vpn evpn neighbor swp53-54 activate
+         - add bgp l2vpn evpn advertise-all-vni
+         - add vxlan vni104001 vxlan id 104001
+         - add vxlan vni104001 bridge access 4001
+         - add vlan 4001 hwaddress 44:38:39:11:00:11
+         - add vlan 4001 vrf tenant1
+         - add vxlan vni10160 vxlan id 10160
+         - add vxlan vni10160 bridge access 160
+         - add vxlan vni10161 vxlan id 10161
+         - add vxlan vni10161 bridge access 161
+         - add vxlan vni10070 vxlan id 10070
+         - add vxlan vni10070 bridge access 70
+         - add vxlan vni10060 vxlan id 10060
+         - add vxlan vni10060 bridge access 60
+         - add vxlan vni10160,vni10161,vni10070,vni10060,vni104001 bridge arp-nd-suppress on
+         - add vxlan vni10160,vni10161,vni10070,vni10060,vni104001 bridge learning off
+         - add vxlan vni10160,vni10161,vni10070,vni10060,vni104001 vxlan local-tunnelip 10.19.241.14
+
+       commit: true
+
+- hosts: l4
+  tasks:
+   - name: Configure leaf04
+     nclu:
+       commands:
+
+         - add loopback lo ip address 10.19.241.15/32
+         - add loopback lo clag vxlan-anycast-ip 10.19.241.100
+         - add bgp autonomous-system 65204
+         - add bgp network 10.19.241.15/32
+         - add bgp neighbor SPINES peer-group
+         - add bgp neighbor SPINES remote-as external
+         - add bgp neighbor SPINES capability extended-nexthop
+         - add bgp neighbor SPINES description Internal Fabric Network
+         - add bgp neighbor swp53 interface peer-group SPINES
+         - add bgp neighbor swp54 interface peer-group SPINES
+         - add bgp bestpath as-path multipath-relax
+         - add interface swp3,swp5,swp11-12,swp55-56
+         - add vlan 60,70,160,161
+         - add bond peerlink bond slaves swp55,swp56
+         - add interface peerlink.4094 clag peer-ip linklocal
+         - add interface peerlink.4094 clag backup-ip 192.168.200.8 vrf mgmt
+         - add interface peerlink.4094 clag sys-mac 44:38:39:FF:01:56
+         - add bridge bridge ports peerlink
+         - add bridge stp treeprio 8192
+         - add vrf tenant1
+         - add vrf tenant1 vni 104001
+         - add vlan 160 ip address 10.1.212.3/24
+         - add vlan 160 ip address-virtual 00:00:5e:00:a0:01 10.1.212.1/24
+         - add vlan 160 vlan-id 160
+         - add vlan 160 vlan-raw-device bridge
+         - add vlan 160 vrf tenant1
+         - add bgp ipv4 unicast network 10.1.212.0/24
+         - add vlan 161 ip address 10.19.1.3/24
+         - add vlan 161 ip address-virtual 00:00:5e:00:a1:01 10.19.1.1/24
+         - add vlan 161 vlan-id 161
+         - add vlan 161 vlan-raw-device bridge
+         - add vlan 161 vrf tenant1
+         - add bgp ipv4 unicast network 10.19.1.0/24
+         - add vlan 70 ip address 10.18.0.3/24
+         - add vlan 70 ip address-virtual 00:00:5e:00:46:01 10.18.0.1/24
+         - add vlan 70 vlan-id 70
+         - add vlan 70 vlan-raw-device bridge
+         - add vlan 70 vrf tenant1
+         - add bgp ipv4 unicast network 10.18.0.0/24
+         - add vlan 60 ip address 10.18.10.3/24
+         - add vlan 60 ip address-virtual 00:00:5e:00:3c:01 10.18.10.1/24
+         - add vlan 60 vlan-id 60
+         - add vlan 60 vlan-raw-device bridge
+         - add vlan 60 vrf tenant1
+         - add bgp ipv4 unicast network 10.18.10.0/24
+         - add interface swp3 post-up ip link set swp3 promisc on
+         - add interface swp5 post-up ip link set swp5 promisc on
+         - add interface swp11 post-up ip link set swp11 promisc on
+         - add interface swp12 post-up ip link set swp12 promisc on
+         - add interface swp55 post-up ip link set swp55 promisc on
+         - add interface swp56 post-up ip link set swp56 promisc on
+         - add bridge bridge ports swp11
+         - add bridge bridge ports swp12
+         - add bond bond03 bond slaves swp3
+         - add bond bond03 clag id 3
+         - add bond bond03 bridge trunk vlans 60
+         - add bond bond04 bond slaves swp5
+         - add bond bond04 clag id 4
+         - add bond bond04 bridge trunk vlans 60
+         - add bgp l2vpn evpn neighbor swp53-54 activate
+         - add bgp l2vpn evpn advertise-all-vni
+         - add vxlan vni104001 vxlan id 104001
+         - add vxlan vni104001 bridge access 4001
+         - add vlan 4001 hwaddress 44:38:39:11:00:12
+         - add vlan 4001 vrf tenant1
+         - add vxlan vni10160 vxlan id 10160
+         - add vxlan vni10160 bridge access 160
+         - add vxlan vni10161 vxlan id 10161
+         - add vxlan vni10161 bridge access 161
+         - add vxlan vni10070 vxlan id 10070
+         - add vxlan vni10070 bridge access 70
+         - add vxlan vni10060 vxlan id 10060
+         - add vxlan vni10060 bridge access 60
+         - add vxlan vni10160,vni10161,vni10070,vni10060,vni104001 bridge arp-nd-suppress on
+         - add vxlan vni10160,vni10161,vni10070,vni10060,vni104001 bridge learning off
+         - add vxlan vni10160,vni10161,vni10070,vni10060,vni104001 vxlan local-tunnelip 10.19.241.15
+
+       commit: true
+
+- name: Configure Server LACP Interfaces
+  hosts: servers,storage
+  become: yes
+  gather_facts: yes
+  tasks:
+
+  - name: Copy Server LACP Interface Config
+    copy:
+      src: configurations/{{ansible_hostname}}/interfaces
+      dest: /etc/network/interfaces
+    register: reboot
+
+  - name: reboot
+    reboot:
+      pre_reboot_delay: 60
+
+  - name: Install traceroute
+    apt:
+      name: traceroute
+      update_cache: yes

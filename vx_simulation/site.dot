@@ -1,0 +1,73 @@
+graph site {
+ "spine01" [function="spine" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.21"]
+ "spine02" [function="spine" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.22"]
+ "border01" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.9"]
+ "border02" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.10"]
+ "dci01" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.7"]
+ "dci02" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.8"]
+ "leaf01" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.1"]
+ "leaf02" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.2"]
+ "leaf03" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.3"]
+ "leaf04" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.4"]
+ "leaf05" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.5"]
+ "leaf06" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.6"]
+ "isp01" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.11"]
+ "isp02" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.12"]
+ "isp03" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.13"]
+ "isp04" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.14"]
+ "isp05" [function="leaf" os="CumulusCommunity/cumulus-vx" version="3.7.6" memory="768" config="./helper_scripts/extra_switch_config.sh" mgmt_ip="192.168.200.15"]
+
+ "server01" [function="host" os="yk0/ubuntu-xenial" memory="768" config="./helper_scripts/extra_server_config.sh" mgmt_ip="192.168.200.31"]
+ "server02" [function="host" os="yk0/ubuntu-xenial" memory="768" config="./helper_scripts/extra_server_config.sh" mgmt_ip="192.168.200.32"]
+ "server03" [function="host" os="yk0/ubuntu-xenial" memory="768" config="./helper_scripts/extra_server_config.sh" mgmt_ip="192.168.200.33"]
+
+ "spine01":"swp1" -- "leaf01":"swp49"
+ "spine01":"swp2" -- "leaf02":"swp49"
+ "spine01":"swp3" -- "leaf03":"swp49"
+ "spine01":"swp4" -- "leaf04":"swp49"
+ "spine01":"swp5" -- "leaf05":"swp49"
+ "spine01":"swp6" -- "leaf06":"swp49"
+ "spine01":"swp7" -- "dci01":"swp49"
+ "spine01":"swp8" -- "dci02":"swp49"
+ "spine01":"swp9" -- "border01":"swp49"
+ "spine01":"swp10" -- "border02":"swp49"
+ "spine01":"swp11" -- "isp01":"swp49"
+ "spine01":"swp12" -- "isp02":"swp49"
+ "spine01":"swp13" -- "isp03":"swp49"
+ "spine01":"swp14" -- "isp04":"swp49"
+ "spine01":"swp15" -- "isp05":"swp49"
+
+ "spine02":"swp1" -- "leaf01":"swp50"
+ "spine02":"swp2" -- "leaf02":"swp50"
+ "spine02":"swp3" -- "leaf03":"swp50"
+ "spine02":"swp4" -- "leaf04":"swp50"
+ "spine02":"swp5" -- "leaf05":"swp50"
+ "spine02":"swp6" -- "leaf06":"swp50"
+ "spine02":"swp7" -- "dci01":"swp50"
+ "spine02":"swp8" -- "dci02":"swp50"
+ "spine02":"swp9" -- "border01":"swp50"
+ "spine02":"swp10" -- "border02":"swp50"
+ "spine02":"swp11" -- "isp01":"swp50"
+ "spine02":"swp12" -- "isp02":"swp50"
+ "spine02":"swp13" -- "isp03":"swp50"
+ "spine02":"swp14" -- "isp04":"swp50"
+ "spine02":"swp15" -- "isp05":"swp50"
+
+ "leaf01":"swp51" -- "leaf02":"swp51"
+ "leaf01":"swp52" -- "leaf02":"swp52"
+ "leaf03":"swp51" -- "leaf04":"swp51"
+ "leaf03":"swp52" -- "leaf04":"swp52"
+ "leaf05":"swp51" -- "leaf06":"swp51"
+ "leaf05":"swp52" -- "leaf06":"swp52"
+ "dci01":"swp51" -- "dci02":"swp51"
+ "dci01":"swp52" -- "dci02":"swp52"
+ "border01":"swp51" -- "border02":"swp51"
+ "border01":"swp52" -- "border02":"swp52"
+
+ "leaf01":"swp1" -- "server01":"eth1"
+ "leaf02":"swp1" -- "server01":"eth2"
+ "leaf03":"swp1" -- "server02":"eth1"
+ "leaf04":"swp1" -- "server02":"eth2"
+ "leaf05":"swp1" -- "server03":"eth1"
+ "leaf06":"swp1" -- "server03":"eth2"
+}
