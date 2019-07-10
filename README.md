@@ -6,6 +6,7 @@ This is an Ansible demo which configures the described topology for the Otava PO
 
 ### Network Diagram:
 
+![Network Diagram](https://github.com/Cloudofyou/poc-otava/blob/master/documentation/poc-otava.png)
 
 ### Initializing the demo environment:
 
